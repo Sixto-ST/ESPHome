@@ -1,0 +1,81 @@
+esphome:
+  name: lector-rfid
+  friendly_name: Lector RFID
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "xxxxxx"
+
+ota:
+  password: "xxxxxx"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Lector-Rfid Fallback Hotspot"
+    password: !secret ap_password
+
+captive_portal:
+
+spi:
+  clk_pin: GPIO14 # SCK on this board
+  mosi_pin: GPIO13 # MOSI (misspelt MOIS)
+  miso_pin: GPIO12 # MISO
+
+rc522_spi:
+  cs_pin: GPIO15 # SDA on this board I reckon (no idea why -- I suspect they just change a jumper for I2C board)
+  reset_pin: GPIO16 # RST
+  #update_interval: 3s
+  on_tag:
+    then:
+      - homeassistant.tag_scanned: !lambda 'return x;'
+
+binary_sensor:
+  - platform: rc522
+    uid: 00-BB-CC-AA
+    name: "Lector de tarjetas RFID"  
+    filters:
+      - invert:
+  # Estado del dispositivo (Sensor)
+  - platform: status
+    id: esp32_01_estado
+    name: "ESP32 (01) Estado"
+  - platform: gpio
+    pin:
+      number: 23
+      mode:
+        input: true
+        pulldown: true #conectando a 3.3v
+        pullup: true #conectando a negativo
+    name: "boton fisico"
+    #device_class: lock
+
+# Estado del dispositivo (LED)
+status_led:
+  pin: GPIO2  #GPIO2 es un led AZUL en la placa
+
+web_server:
+  port: 80
+
+switch:  #Esto genera un boton ON-OFF en Hassos
+- platform: gpio
+  pin: GPIO18
+  name: "rojo"
+- platform: gpio
+  pin: GPIO21
+  name: "verde"
+
+
+  
