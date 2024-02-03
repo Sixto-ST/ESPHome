@@ -1,0 +1,183 @@
+esphome:
+  name: teclado-8266
+  friendly_name: Teclado 8266
+
+esp8266:
+  board: esp01_1m
+
+# Enable logging
+logger:
+  level: DEBUG 
+  logs:
+    switch: INFO
+    matrix_keypad: INFO
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "+5okHSP0D5aAJIEM6yNI3tvyzU+Pck+jkXuux29S+QY="
+
+ota:
+  password: "ce36ba569b261fd8364c4b8e506c8386"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Teclado-8266 Fallback Hotspot"
+    password: "MXrwdDVeHWh3"
+
+captive_portal:
+    
+web_server:
+  port: 80
+  
+  
+# Estado del dispositivo (LED)
+#status_led:
+#  pin: GPIO2  #GPIO2 es un led AZUL en la placa
+
+
+# Example configuration entry
+matrix_keypad:
+  id: mykeypad
+  rows:
+    - pin: GPIO16 #Fila 1 (123A)
+    - pin: GPIO5  #Fila 2 (456B)
+    - pin: GPIO4  #Fila 3 (789C)
+    - pin: GPIO0  #Fila 4 (*0#D)
+  columns:   #No utilizar GPIO15 para teclados, da errores y se jode todo
+    - pin: GPIO14 #Columna 1 (147*)
+    - pin: GPIO12 #Columna 2 (2580)
+    - pin: GPIO13 #Columna 3 (369#)
+    - pin: GPIO3 #Columna 4 (ABCD)
+  keys: "123A456B789C*0#D"
+  has_diodes: false
+
+
+# Example configuration entry
+key_collector:
+  - id: pincode_reader
+    source_id: mykeypad
+    min_length: 4
+    max_length: 6
+    end_keys: "#,*"
+    end_key_required: true
+    #back_keys: "*"
+    #clear_keys: "C"
+    allowed_keys: "0123456789ABCD"
+    timeout: 5s
+    on_progress:
+      - logger.log:
+          format: "input progress: '%s'"
+          args: [ 'x.c_str()']
+      - switch.turn_on: buzzer
+      - delay: 100ms
+      - switch.turn_off: buzzer
+    on_result:
+      - logger.log:
+          format: "input result: '%s'"
+          args: [ 'x.c_str()' ]
+      - text_sensor.template.publish:
+            id: keypad
+            state:  !lambda return x;
+    on_timeout:
+      - logger.log:
+          format: "input timeout: '%s'"
+          args: [ 'x.c_str()' ]
+      - text_sensor.template.publish:
+            id: keypad
+            state:  "TimedOut"
+      - text_sensor.template.publish:
+            id: registro
+            state:  "Tiempo de espera superado"
+
+
+text_sensor:
+  - platform: template
+    name: Histórico
+    id: registro
+    lambda: |-
+      return {"En espera"};
+      
+  - platform: template
+    name: Código tecleado
+    id: keypad
+    lambda: |-
+      return {"------"};
+
+    on_value:
+      then:
+        - if:
+            condition:
+              or:
+                - text_sensor.state:
+                    id: keypad
+                    state: '1234'
+                - text_sensor.state:
+                    id: keypad
+                    state: '45678'
+            then:
+                - text_sensor.template.publish:
+                    id: registro
+                    state:  "Código aceptado"
+                - switch.turn_on: relay1
+                - switch.turn_on: buzzer2
+                - delay: 1s
+                - switch.turn_off: buzzer2
+            else:
+              - if:
+                  condition:
+                    - text_sensor.state:
+                        id: keypad
+                        state: '------' 
+                  then:
+                    - text_sensor.template.publish:
+                        id: registro
+                        state:  "En espera"
+        
+                  else:
+                    - text_sensor.template.publish:
+                        id: registro
+                        state:  "Código erróneo detectado"
+                    - repeat:
+                       count: 3
+                       then:
+                          - switch.turn_on: buzzer2
+                          - delay: 500ms
+                          - switch.turn_off: buzzer2
+                          - delay: 500ms
+    
+
+
+switch:
+  - platform: gpio
+    pin:
+      number: GPIO2
+      inverted: true
+    name: "Relé"
+    internal: false
+    id: relay1
+    on_turn_on:
+      - delay: 5s
+      - switch.turn_off: relay1
+
+  - platform: gpio
+    pin:
+      number: GPIO15
+      inverted: false
+    name: "Pitido"
+    internal: false
+    id: buzzer
+
+  - platform: gpio
+    pin:
+      number: GPIO1
+      inverted: false
+    name: "Pitido2"
+    internal: false
+    id: buzzer2
+
+
