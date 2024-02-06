@@ -40,18 +40,15 @@ rc522_spi:
   #update_interval: 3s
   on_tag:
     then:
+      - switch.turn_on: led_lectura_ok
+      - delay: 300ms
+      - switch.turn_off: led_lectura_ok
       - homeassistant.tag_scanned: !lambda 'return x;'
 
 binary_sensor:
-  - platform: rc522
-    uid: 00-BB-CC-AA
-    name: "Lector de tarjetas RFID"  
-    filters:
-      - invert:
   # Estado del dispositivo (Sensor)
   - platform: status
-    id: esp32_01_estado
-    name: "ESP32 (01) Estado"
+    name: "Estado"
   - platform: gpio
     pin:
       number: 23
@@ -75,7 +72,8 @@ switch:  #Esto genera un boton ON-OFF en Hassos
   name: "rojo"
 - platform: gpio
   pin: GPIO21
-  name: "verde"
+  id: led_lectura_ok
+  internal: true
 
 
   
