@@ -141,6 +141,7 @@ binary_sensor:
   - platform: gpio
     pin:
       number: GPIO23
+      #inverted: true    # Descomentar para invertir el sensor dependiendo del tipo de interruptor (NA-NC)
       mode:
         input: true
         pulldown: true #conectando a 3.3v. 
