@@ -143,8 +143,8 @@ binary_sensor:
       number: GPIO23
       mode:
         input: true
-        pulldown: false #conectando a 3.3v. True o False según convenga.
-        pullup: true #conectando a negativo. True o False según convenga.
+        pulldown: true #conectando a 3.3v. 
+        pullup: true #conectando a negativo. 
     name: "Estado puerta"
     device_class: door
 
