@@ -54,6 +54,9 @@ rc522_spi:
       - delay: 300ms
       - switch.turn_off: led_lectura_ok
       - homeassistant.tag_scanned: !lambda 'return x;'
+      - text_sensor.template.publish:
+            id: tag_escaneada
+            state:  !lambda return x;
 
 # Configuración del teclado
 matrix_keypad:
@@ -151,6 +154,11 @@ binary_sensor:
 
 # Códigos introducidos
 text_sensor:
+  - platform: template
+    name: Llave escaneada
+    id: tag_escaneada
+    lambda: |-
+      return {"------"};
   - platform: template
     name: Histórico
     id: registro
