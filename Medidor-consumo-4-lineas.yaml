@@ -1,0 +1,133 @@
+esphome:
+  name: medidor-consumo-4-lineas
+  friendly_name: Medidor de consumos
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "xxxxxx"
+
+ota:
+  password: "xxxxxx"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Medidor-Luz Fallback Hotspot"
+    password: "xxxxxx"
+
+captive_portal:
+
+web_server:
+  port: 80    
+
+# Estado del dispositivo (LED)
+status_led:
+  pin: GPIO2  #GPIO2 es un led AZUL en la placa
+
+uart:
+  - id: ubus_1y2
+    rx_pin: GPIO16
+    tx_pin: GPIO17
+    baud_rate: 9600
+  - id: ubus_3y4
+    rx_pin: GPIO3
+    tx_pin: GPIO1
+    baud_rate: 9600
+
+modbus:
+  - id: mbus_1y2
+    uart_id: ubus_1y2
+  - id: mbus_3y4
+    uart_id: ubus_3y4
+
+sensor:
+  - platform: uptime
+    name: Uptime Sensor
+
+  - platform: wifi_signal
+    name: "WiFi Signal Sensor"
+    update_interval: 30s
+
+  - platform: pzemac
+    id: pzemac_01
+    modbus_id: mbus_1y2
+    current:
+      name: "L1 Current"
+    voltage:
+      name: "L1 Voltage"
+    energy:
+      name: "L1 Energy"
+    power:
+      name: "L1 Power"
+    frequency:
+      name: "L1 Frequency"
+    power_factor:
+      name: "L1 Power Factor"
+    update_interval: 60s
+    address: 1
+
+  - platform: pzemac
+    id: pzemac_02
+    modbus_id: mbus_1y2
+    current:
+      name: "L2 Current"
+    voltage:
+      name: "L2 Voltage"
+    energy:
+      name: "L2 Energy"
+    power:
+      name: "L2 Power"
+    frequency:
+      name: "L2 Frequency"
+    power_factor:
+      name: "L2 Power Factor"
+    update_interval: 60s
+    address: 2
+
+  - platform: pzemac
+    id: pzemac_03
+    modbus_id: mbus_3y4
+    current:
+      name: "L3 Current"
+    voltage:
+      name: "L3 Voltage"
+    energy:
+      name: "L3 Energy"
+    power:
+      name: "L3 Power"
+    frequency:
+      name: "L3 Frequency"
+    power_factor:
+      name: "L3 Power Factor"
+    update_interval: 60s
+    address: 3
+
+  - platform: pzemac
+    id: pzemac_04
+    modbus_id: mbus_3y4
+    current:
+      name: "L4 Current"
+    voltage:
+      name: "L4 Voltage"
+    energy:
+      name: "L4 Energy"
+    power:
+      name: "L4 Power"
+    frequency:
+      name: "L4 Frequency"
+    power_factor:
+      name: "L4 Power Factor"
+    update_interval: 60s
+    address: 4
